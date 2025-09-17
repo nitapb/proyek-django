@@ -6,8 +6,8 @@ from .forms import ProductForm
 def show_main(request):
     context = {
         "app_name": "Football Shop",
-        "student_name": "Nama Kamu",
-        "student_class": "PBP D",
+        "student_name": "Nita Pasaribu",
+        "student_class": "PBP A",
     }
     return render(request, "main.html", context)
 
