@@ -43,3 +43,13 @@ def product_json_by_id(request, id):
         "stock": product.stock,
         "created_at": product.created_at.isoformat(),
     })
+
+# XML untuk semua produk
+def products_xml(request):
+    data = Product.objects.all()
+    return HttpResponse(serializers.serialize("xml", data), content_type="application/xml")
+
+# XML untuk produk berdasarkan ID
+def product_xml_by_id(request, id):
+    data = Product.objects.filter(pk=id)
+    return HttpResponse(serializers.serialize("xml", data), content_type="application/xml")
