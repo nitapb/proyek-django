@@ -3,6 +3,14 @@ from django.http import JsonResponse
 from .models import Product
 from .forms import ProductForm
 
+def show_main(request):
+    context = {
+        "app_name": "Football Shop",
+        "student_name": "Nama Kamu",
+        "student_class": "PBP D",
+    }
+    return render(request, "main.html", context)
+
 # Halaman daftar produk
 def show_products(request):
     products = Product.objects.all()
