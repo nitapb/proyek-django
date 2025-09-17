@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ product.name }}</h1>
+<img src="{{ product.thumbnail }}" alt="{{ product.name }}" style="max-width:200px;">
+<p><b>Harga:</b> Rp{{ product.price }}</p>
+<p><b>Deskripsi:</b> {{ product.description }}</p>
+<p><b>Kategori:</b> {{ product.category }}</p>
+<p><b>Stock:</b> {{ product.stock }}</p>
+<p><b>Featured:</b> {{ product.is_featured }}</p>
+<p><b>Dibuat:</b> {{ product.created_at }}</p>
+<a href="{% url 'main:show_products' %}">Kembali</a>
+{% endblock %}

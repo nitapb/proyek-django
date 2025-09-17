@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Daftar Produk</h1>
+<a href="{% url 'main:create_product' %}">Add Product</a>
+<ul>
+  {% for product in products %}
+    <li>
+      {{ product.name }} - Rp{{ product.price }}
+      <a href="{% url 'main:show_product' product.id %}">Detail</a>
+    </li>
+  {% empty %}
+    <li>Belum ada produk.</li>
+  {% endfor %}
+</ul>
+{% endblock %}
