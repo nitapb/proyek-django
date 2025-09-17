@@ -41,5 +41,5 @@ def product_json_by_id(request, id):
         "category": product.category,
         "is_featured": product.is_featured,
         "stock": product.stock,
-        "created_at": product.created_at,
+        "created_at": product.created_at.isoformat(),
     })
