@@ -6,7 +6,7 @@
 <p><b>Deskripsi:</b> {{ product.description }}</p>
 <p><b>Kategori:</b> {{ product.category }}</p>
 <p><b>Stock:</b> {{ product.stock }}</p>
-<p><b>Featured:</b> {{ product.is_featured }}</p>
+<p><b>Tersedia:</b> {{ product.is_available }}</p>
 <p><b>Dibuat:</b> {{ product.created_at }}</p>
 <a href="{% url 'main:show_products' %}">Kembali</a>
 {% endblock %}

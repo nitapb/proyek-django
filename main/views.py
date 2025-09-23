@@ -5,10 +5,12 @@ from .models import Product
 from .forms import ProductForm
 
 def show_main(request):
+    products = Product.objects.all()
     context = {
         "app_name": "Football Shop",
         "student_name": "Nita Pasaribu",
         "student_class": "PBP A",
+        "products": products,
     }
     return render(request, "main.html", context)
 
@@ -28,16 +30,15 @@ def create_product(request):
         form = ProductForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect("main:show_products")
+            return redirect("main:show_main")
     else:
         form = ProductForm()
     return render(request, "create_product.html", {"form": form})
 
 # JSON untuk semua produk
 def products_json(request):
-    products = list(Product.objects.values())
+    data = Product.objects.all()
     return HttpResponse(serializers.serialize("json", data), content_type="application/json")
-
 
 # JSON untuk produk berdasarkan ID
 def product_json_by_id(request, id):
