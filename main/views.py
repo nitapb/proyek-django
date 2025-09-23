@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.core import serializers
 from .models import Product
 from .forms import ProductForm
 
@@ -35,22 +36,13 @@ def create_product(request):
 # JSON untuk semua produk
 def products_json(request):
     products = list(Product.objects.values())
-    return JsonResponse(products, safe=False)
+    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+
 
 # JSON untuk produk berdasarkan ID
 def product_json_by_id(request, id):
-    product = get_object_or_404(Product, pk=id)
-    return JsonResponse({
-        "id": product.id,
-        "name": product.name,
-        "price": product.price,
-        "description": product.description,
-        "thumbnail": product.thumbnail,
-        "category": product.category,
-        "is_featured": product.is_featured,
-        "stock": product.stock,
-        "created_at": product.created_at.isoformat(),
-    })
+    data = Product.objects.filter(pk=id)
+    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
 
 # XML untuk semua produk
 def products_xml(request):
