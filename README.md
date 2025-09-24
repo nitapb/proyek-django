@@ -1,5 +1,94 @@
 Link Tautan: https://pbp.cs.ui.ac.id/nita.pasaribu/footballshop
 
+JAWABAN TUGAS 4
+1. AuthenticationForm adalah form bawaan Django (django.contrib.auth.forms.AuthenticationForm) yang dipakai untuk proses login. Secara default menampilkan field username dan password, melakukan validasi input, dan memanggil backend auth untuk memverifikasi kredensial. Jika valid, form menyediakan user lewat form.get_user().
+Kelebihan:
+- Siap pakai karena tidak perlu menulis validasi username/password dari nol.
+- Terintegrasi langsung dengan sistem authentication Django (backends, session).
+- Memiliki validasi aman (mis. memeriksa is_active) dan menggunakan mekanisme error handling standar Django.
+- Mudah dijadikan basis jika ingin menambah fungsionalitas (subclassing).
+Kekurangan:
+- Default hanya mendukung kombinasi username/password; jika ingin login via email atau social login perlu dikustomisasi/extend.
+- Tampilan (UI) minimal sehingga perlu template/JS/CSS tambahan untuk UX bagus.
+- Bawaan tidak meng-handle rate limiting (bisa ditambahkan di layer lain).
+
+2. Perbedaan autentikasi dan otorisasi dan bagaimana Django mengimplementasikannya
+Autentikasi (Authentication):
+    - Menjawab pertanyaan “Siapakah pengguna ini?” atau sama saja memverifikasi identitas (login).
+    - Django: django.contrib.auth menyediakan model User, mekanisme login/logout (authenticate(), login(), logout()), dan Form/Views bawaan (mis. AuthenticationForm, LoginView).
+Otorisasi (Authorization):
+    - Menjawab pertanyaan “Apa yang boleh dilakukan pengguna itu?” atau sama saja mengatur hak akses (permissions).
+    - Django: field is_staff, is_superuser, User.groups, User.user_permissions, decorator @permission_required, @login_required, dan method user.has_perm('app_label.codename').
+Implementasi Django:
+    - Identity stored di User model.
+    - Setelah authenticate() sukses, login() membuat session yang menyimpan user id; request.user tersedia pada request-selanjutnya.
+    - Permission dapat diperiksa di template ({% if perms.app_label.codename %}) atau di views (user.has_perm(...)) dan via decorators.
+
+3. Kelebihan dan Kekurangan pada session dan cookies dalam konteks penyimpanan state
+Cookies (client-side):
+    - Kelebihan: sederhana; tidak butuh server storage; cocok untuk set nilai kecil yang perlu dibaca JS (mis. theme).
+    - Kekurangan: kapasitas kecil (~4KB), rentan XSS jika tidak HttpOnly, klien bisa memodifikasi (jika tidak digabung signed), tidak cocok untuk data sensitif.
+Sessions (server-side, cookie untuk session id):
+    - Kelebihan: data disimpan di server (db/cache); aman untuk menyimpan informasi sensitif (mis. user_id, cart server-side); cookie hanya menyimpan session id. Django menyimpan session id di cookie (SESSION_COOKIE_NAME) dan session data di database/cache.
+    - Kekurangan: butuh storage server (db/cache); skalabilitas perlu perencanaan (shared cache atau DB untuk multi-server); perlu mekanisme pembersihan session (expired).
+
+4. Cookies tidak sepenuhnya aman secara default sebab terdapat beberapa risiko yang ditimbulkan dari cookies:
+    - XSS: attacker dapat mencuri cookie yang dapat diakses melalui JavaScript jika cookie tidak HttpOnly.
+    - CSRF: cookie-based auth rentan terhadap cross-site request forgery jika tidak ada token pelindung.
+    - Tampering: client bisa memodifikasi cookie bila tidak di-sign/di-encrypt.
+Django menangani hal tersebut dengan cara sebagai berikut:
+    - Session cookie Django tidak menyimpan credensial, hanya session id. Session data di server.
+    - Pengaturan keamanan yang tersedia:
+        - SESSION_COOKIE_SECURE = True → cookie hanya dikirim via HTTPS.
+        - SESSION_COOKIE_HTTPONLY = True → cookie tidak dapat diakses JS.
+        - CSRF_COOKIE_SECURE, CSRF_COOKIE_HTTPONLY (CSRF cookie biasanya bukan HttpOnly karena JS needs to read for AJAX in some contexts — gunakan dengan hati-hati).
+        - CSRF_TRUSTED_ORIGINS untuk domain deploy HTTPS.
+        - SESSION_EXPIRE_AT_BROWSER_CLOSE, SESSION_COOKIE_AGE.
+        - SameSite (Django 3.1+) SESSION_COOKIE_SAMESITE = 'Lax' (default yang baik).
+    - CSRF protection: Django punya CsrfViewMiddleware dan tag {% csrf_token %} wajib di form POST.
+    - Signed cookies: Django menyediakan mekanisme set_signed_cookie() or django.core.signing untuk mencegah tampering.
+
+5. Step-by-step implementasi checklist tugas 4:
+(1) Persiapan struktur
+    - Memastikan main app ada dan terdaftar di INSTALLED_APPS.
+    - Menyiapkan templates/ global (base.html) dan main/templates/ untuk main.html, product_list.html, create_product.html, product_detail.html, login.html, register.html.
+    - Alasan: float layout konsisten dan memudahkan reuse template (base + include).
+(2) Model: Product dihubungkan ke User (dengan aman untuk migrasi)
+    - Menambahkan field user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True) awal untuk jalankan migrasi tanpa memaksa default untuk data lama.
+    - CATEGORY_CHOICES dibuat dengan opsi "Umum" dan "Special Edition".
+    - Menambahkan is_available sebagai Boolean.
+    Alasan: menambahkan null=True dulu menghindari masalah migrate bila sudah ada data lama. Setelah assign user ke data lama, bisa ubah jadi null=False jika diinginkan.
+(3) Forms dan Admin
+    - ProductForm pakai ModelForm mencakup ['name','price','description','thumbnail','category','is_available','stock'].
+    - Register Product di admin.py (update list_display untuk is_available bukan is_featured).
+    - Alasan: memudahkan tambah data lewat admin untuk create dummy data.
+(4) Views (auth + produk + API)
+    - Menambahkan fungsi register, login_user (menggunakan AuthenticationForm), dan logout_user.
+        - login_user memanggil authenticate() dan login(), lalu menyimpan cookie last_login
+        - logout_user melakukan logout() dan response.delete_cookie('last_login').
+    - Menggunakan @login_required(login_url='main:login') untuk show_main, create_product, show_my_products agar hanya user terautentikasi dapat mengakses.
+    - Mengimplementasikan create_product untuk form.save(commit=False) → product.user = request.user → product.save().
+    - Mengimplementasikan endpoints JSON & XML menggunakan django.core.serializers.serialize(...) agar konsisten.
+    - Alasan: memisahkan autentikasi dan resource access; cookie last_login memudahkan demonstrasi cookies.
+(5) URLS
+    - Menambahkan routes:
+        '' → show_main (landing page identitas + tombol All/My switch)
+        'products/all/' → show_all_products
+        'products/mine/' → show_my_products
+        'products/create/'
+        'products/<int:id>/' → detail
+        'register/', 'login/', 'logout/'
+        'api/json/', 'api/json/<id>', 'api/xml/', 'api/xml/<id>'
+    - Alasan: jelas memisahkan public API dan view yang memerlukan login, serta memudahkan testing.
+(6) Templates
+    - main.html → extend base.html, tampilkan identitas + tombol All/My + include product_list.html ketika dibuka.
+    - product_list.html → dibuat sebagai partial (tidak extends base.html) sehingga bisa include di main.html dan juga dipakai standalone.
+    - create_product.html, login.html, register.html, product_detail.html dibuat sesuai kebutuhan (ingat {% csrf_token %} di form POST).
+    - Alasan: partial include menghindari duplikasi layout dan memudahkan reuse.
+(7) Pengujian dan dummy data
+    - Membuat 2 akun: menggunakan python manage.py createsuperuser atau via register form.
+    - Untuk tiap akun, tambahkan 3 produk dummy (bisa lewat admin atau form create product setelah login).
+
 JAWABAN TUGAS 3
 1. Data delivery lewat API, seperti JSON atau XML penting sebab:
     - Memisahkan backend dan frontend demi memudahkan pengembangan paralel sebab backend bertugas menyediakan data dan frontend bertugas menampilkan.
