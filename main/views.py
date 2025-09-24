@@ -49,6 +49,7 @@ def show_main(request):
         "app_name": "Football Shop",
         "student_name": "Nita Pasaribu",  # identitas pembuat web
         "student_class": "PBP A",
+        "username": request.user.username,
         "last_login": request.COOKIES.get("last_login", "Never"),
         "products": products,
         "view": "mine",   # supaya tombol toggle tahu posisi default
@@ -75,6 +76,7 @@ def show_all_products(request):
         "app_name": "Football Shop",
         "student_name": "Nita Pasaribu",
         "student_class": "PBP A",
+        "username": request.user.username,
         "last_login": request.COOKIES.get("last_login", "Never"),
         "products": products,
         "view": "all",
@@ -88,11 +90,20 @@ def show_my_products(request):
         "app_name": "Football Shop",
         "student_name": "Nita Pasaribu",
         "student_class": "PBP A",
+        "username": request.user.username,
         "last_login": request.COOKIES.get("last_login", "Never"),
         "products": products,
         "view": "mine",
     }
     return render(request, "main.html", context)
+
+@login_required(login_url='main:login')
+def show_product(request, id):
+    product = get_object_or_404(Product, pk=id)
+    context = {
+        "product": product,
+    }
+    return render(request, "product_detail.html", context)
 
 # JSON dan XML endpoints
 def products_json(request):
