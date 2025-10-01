@@ -1,0 +1,92 @@
+/* Form Styling */
+.form-style form input,
+.form-style form textarea,
+.form-style form select {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 2px solid #f8c8dc; /* pastel pink */
+    border-radius: 0.5rem;
+    background-color: #fff0f6; /* soft pink background */
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    color: #5a3d55;
+    transition: all 0.3s ease;
+}
+
+.form-style form input:focus,
+.form-style form textarea:focus,
+.form-style form select:focus {
+    outline: none;
+    border-color: #f48fb1; /* darker pastel pink */
+    box-shadow: 0 0 0 4px rgba(244, 143, 177, 0.25);
+    background-color: #fff5fa;
+}
+
+/* Checkbox Styling */
+.form-style input[type="checkbox"] {
+    width: 1.3rem;
+    height: 1.3rem;
+    border: 2px solid #f8c8dc;
+    border-radius: 0.4rem;
+    background-color: #fff0f6;
+    cursor: pointer;
+    position: relative;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    transition: all 0.2s ease;
+}
+
+.form-style input[type="checkbox"]:hover {
+    background-color: #ffe4ec;
+}
+
+.form-style input[type="checkbox"]:checked {
+    background-color: #f48fb1;
+    border-color: #f48fb1;
+}
+
+.form-style input[type="checkbox"]:checked::after {
+    content: '♡'; /* pake heart biar imut */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -55%);
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+/* Button Styling */
+.btn-pink {
+    display: inline-block;
+    background-color: #f8c8dc;
+    color: #5a3d55;
+    padding: 0.6rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-pink:hover {
+    background-color: #f48fb1;
+    color: white;
+    box-shadow: 0 4px 10px rgba(244, 143, 177, 0.3);
+}
+
+/* Card Styling */
+.card-pastel {
+    background-color: #fff0f6;
+    border: 2px solid #f8c8dc;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 6px 15px rgba(248, 200, 220, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-pastel:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(244, 143, 177, 0.4);
+}

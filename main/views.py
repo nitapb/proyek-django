@@ -105,6 +105,31 @@ def show_product(request, id):
     }
     return render(request, "product_detail.html", context)
 
+@login_required(login_url='main:login')
+def edit_product(request, id):
+    product = get_object_or_404(Product, pk=id, user=request.user)
+
+    if request.method == "POST":
+        form = ProductForm(request.POST, request.FILES, instance=product)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Product '{product.name}' berhasil diperbarui.")
+            return redirect("main:show_my_products")
+    else:
+        form = ProductForm(instance=product)
+
+    return render(request, "edit_product.html", {"form": form, "product": product})
+
+@login_required(login_url='main:login')
+def delete_product(request, id):
+    product = get_object_or_404(Product, pk=id, user=request.user)
+    if request.method == "POST":
+        product.delete()
+        messages.success(request, f"Product '{product.name}' berhasil dihapus.")
+        return redirect("main:show_my_products")
+
+    return render(request, "delete_product.html", {"product": product})
+
 # JSON dan XML endpoints
 def products_json(request):
     data = Product.objects.all()

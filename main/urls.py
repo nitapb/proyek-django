@@ -22,4 +22,7 @@ urlpatterns = [
     path("register/", views.register, name="register"),
     path("login/", views.login_user, name="login"),
     path("logout/", views.logout_user, name="logout"),
+
+    path("products/<int:id>/edit/", views.edit_product, name="edit_product"),
+    path("products/<int:id>/delete/", views.delete_product, name="delete_product"),
 ]

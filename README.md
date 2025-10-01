@@ -1,5 +1,59 @@
 Link Tautan: https://pbp.cs.ui.ac.id/nita.pasaribu/footballshop
 
+JAWABAN TUGAS 5
+1. Urutan prioritas CSS selector
+    C A S C A D E:
+    • Origin & Importance
+        !important pada stylesheet author > !important pada user > normal author > user > user-agent (browser default).
+    • Specificity (spesifisitas)
+        • Inline style (contoh: style="...") punya bobot tertinggi.
+        • Jumlah ID di selector.
+        • Jumlah kelas (.class), atribut ([type="text"]) dan pseudo-class (:hover).
+        • Jumlah elemen/pseudo-elemen (div, ::before).
+        • Representasi umum: (a, b, c, d) — di mana a=1 untuk inline, b = #IDs, c = #classes/attrs/pseudo-class, d = #elements/pseudo-elements.
+    • Source order —> bila specificity sama, aturan yang muncul lebih akhir (kemudian didefinisikan) menang.
+
+2. Mengapa responsive design penting? 
+    • Pengguna mengakses lewat ponsel, tablet, laptop, TV. Layout harus menyesuaikan.
+    • Tampilan yang sesuai ukuran layar menaikkan kenyamanan, engagement, dan konversi.
+    • Google dan mesin pencari memprioritaskan mobile-friendly.
+    • Satu codebase responsif lebih mudah dipelihara daripada banyak versi desktop/mobile.
+Contoh aplikasi yang sudah responsive
+    • Gmail / Google Mail (web) —> layout berubah untuk layar kecil, menu collapse, konten bisa di-scroll nyaman.
+    • Twitter —> feed, header, dan sidebar beradaptasi dengan perangkat.
+Contoh aplikasi yang belum/kurang responsive
+    • Beberapa situs pemerintahan lama atau intranet lawas biasanya masih desktop-first (layout tabel fix, font kecil, tanpa breakpoint).
+    • Alasan: aplikasi internal dibuat dulu untuk layar desktop, tidak ada anggaran/keperluan rework untuk mobile.
+
+Berikut teks README.md yang sudah saya susun — siap kamu salin-tempel ke file README.md di root project. Saya memakai judul/anak-judul yang jelas untuk setiap tugas dan menyertakan contoh kode singkat agar langsung bisa dipraktekkan.
+
+3. Perbedaan margin, border, dan padding (CSS box model)
+    • Content = area tempat teks/gambar berada.
+    • Padding = ruang di dalam elemen, antara content dan border.
+    • Border = garis di sekitar padding (bisa style/width/color).
+    • Margin = ruang di luar border, antara elemen dengan elemen lain.
+
+4. Konsep Flexbox dan Grid serta kegunaannya
+Flexbox (Flexible Box):
+    • One-dimensional layout — paling baik untuk tata letak satu baris atau satu kolom.
+    • Container: display: flex;
+    • Berguna untuk: navbar, toolbar, card layout sederhana, alignment vertikal/horisontal.
+Grid Layout:
+    • Two-dimensional layout — bagus untuk grid kompleks (baris + kolom).
+    • Container: display: grid;
+    • Berguna untuk: layout halaman utama, dashboard, complex responsive grids.
+Kapan pilih yang mana:
+    • Flexbox untuk komponen linear (row/column) dan alignment.
+    • Grid untuk layout kompleks yang mengatur baris & kolom sekaligus.
+    • Seringkali keduanya digabung di mana Grid untuk page-level, Flexbox untuk internal components.
+
+5. Implementasi checklist tugas:
+- Menambahkan Tailwind ke Aplikasi dengan menambahkan di base.html
+- Menambahkan fitur edit_product dan delete_product dengan membuat fungsi di views dan melakukan routing di urls serta membuat file html nya.
+- Menambahkan navigation bar pada aplikasi dengan membuat navbar.html 
+- Melakukan konfigurasi static files pada footballshop dengan cara mengubah static di settings.py
+- Melakukan styling dengan Tailwind dan external CSS dengan menambahkan global.css lalu lanjut styling navbar, halaman login, halaman register, halaman home, halaman detail product, halaman create product, dan halaman edit product
+
 JAWABAN TUGAS 4
 1. AuthenticationForm adalah form bawaan Django (django.contrib.auth.forms.AuthenticationForm) yang dipakai untuk proses login. Secara default menampilkan field username dan password, melakukan validasi input, dan memanggil backend auth untuk memverifikasi kredensial. Jika valid, form menyediakan user lewat form.get_user().
 Kelebihan:

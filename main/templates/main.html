@@ -1,24 +1,64 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% load static %}
+
+{% block meta %}
+<title>Football Shop</title>
+{% endblock meta %}
+
 {% block content %}
-<h1>{{ app_name }}</h1>
-<p>Nama: {{ student_name }}</p>
-<p>Kelas: {{ student_class }}</p>
+{% include 'navbar.html' %}
 
-<hr>
+<div class="bg-pink-50 w-full pt-16 min-h-screen">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-<p>Login sebagai: <b>{{ username }}</b></p>
-<p>Sesi terakhir login: {{ last_login }}</p>
-<a href="{% url 'main:logout' %}">Logout</a>
+    <!-- Header Section -->
+    <div class="mb-8 text-center">
+      <h1 class="text-4xl font-bold text-pink-700 mb-2">Football Shop</h1>
+      <p class="text-gray-600">Tempat belanja perlengkapan bola 🌸</p>
+    </div>
 
-<hr>
-<!-- Tombol switch All Products dan My Products -->
-<a href="{% url 'main:show_all_products' %}">
-    <button {% if view == "all" %}disabled{% endif %}>All Products</button>
-</a>
-<a href="{% url 'main:show_my_products' %}">
-    <button {% if view == "mine" %}disabled{% endif %}>My Products</button>
-</a>
+    <!-- Filter Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 bg-white rounded-lg border border-pink-200 p-4 shadow-sm">
+      <div class="flex space-x-3 mb-4 sm:mb-0">
+        <!-- Semua Produk -->
+        <a href="{% url 'main:show_all_products' %}"
+           class="{% if view == 'all' %} bg-pink-500 text-white {% else %} bg-white text-gray-700 border border-gray-300 {% endif %} 
+                  px-4 py-2 rounded-md font-medium transition-colors hover:bg-pink-500 hover:text-white">
+          Semua Produk
+        </a>
+        <!-- Produk Saya -->
+        <a href="{% url 'main:show_my_products' %}"
+           class="{% if view == 'mine' %} bg-pink-500 text-white {% else %} bg-white text-gray-700 border border-gray-300 {% endif %} 
+                  px-4 py-2 rounded-md font-medium transition-colors hover:bg-pink-500 hover:text-white">
+          Produk Saya
+        </a>
+      </div>
+      {% if user.is_authenticated %}
+        <div class="text-sm text-gray-500">
+          Last login: {{ last_login }}
+        </div>
+      {% endif %}
+    </div>
 
-<hr>
-{% include "product_list.html" %}
-{% endblock %}
+    <!-- Product Grid / Empty State -->
+    {% if not products %}
+      <div class="bg-white rounded-lg border border-pink-200 p-12 text-center">
+        <div class="w-32 h-32 mx-auto mb-4">
+          <img src="{% static 'image/no-products.png' %}" alt="No products available" class="w-full h-full object-contain">
+        </div>
+        <h3 class="text-lg font-medium text-gray-800 mb-2">Belum ada produk</h3>
+        <p class="text-gray-500 mb-6">Yuk, tambahkan produk pertamamu ✨</p>
+        <a href="{% url 'main:create_product' %}" 
+           class="inline-flex items-center px-4 py-2 bg-pink-500 text-white rounded-md hover:bg-pink-600 transition-colors">
+          + Tambah Produk
+        </a>
+      </div>
+    {% else %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% include "product_list.html" %}
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock content %}

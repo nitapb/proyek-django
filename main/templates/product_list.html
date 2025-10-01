@@ -1,15 +1,39 @@
-<h2>Daftar Produk</h2>
-<a href="{% url 'main:create_product' %}">Add Product</a>
-<div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px;">
-  {% for product in products %}
-    <div style="border: 1px solid #ccc; padding: 10px; width: 200px; text-align: center;">
-      <img src="{{ product.thumbnail }}" alt="{{ product.name }}" style="max-width:100%; max-height:150px; object-fit: cover;">
-      <h3>{{ product.name }}</h3>
-      <p><b>Rp{{ product.price }}</b></p>
-      <p>Kategori: {{ product.get_category_display }}</p>
-      <a href="{% url 'main:show_product' product.id %}">Detail</a>
+{% for product in products %}
+  <article class="bg-white rounded-lg border border-pink-200 hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+    <!-- Thumbnail -->
+    <div class="aspect-[4/3] relative overflow-hidden">
+      {% if product.thumbnail %}
+        <img src="{{ product.thumbnail }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+      {% else %}
+        <div class="w-full h-full bg-pink-100"></div>
+      {% endif %}
     </div>
-  {% empty %}
-    <p>Belum ada produk.</p>
-  {% endfor %}
-</div>
+
+    <!-- Content -->
+    <div class="p-5">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2 line-clamp-1">
+        {{ product.name }}
+      </h3>
+      <p class="text-pink-600 font-bold mb-2">Rp{{ product.price }}</p>
+      <p class="text-sm text-gray-500 mb-4">Kategori: {{ product.get_category_display }}</p>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+        <a href="{% url 'main:show_product' product.id %}" 
+           class="text-pink-600 hover:text-pink-700 font-medium text-sm transition-colors">
+          Detail
+        </a>
+        <div class="flex space-x-2">
+          <a href="{% url 'main:edit_product' product.id %}" 
+             class="text-yellow-600 hover:text-yellow-700 text-sm transition-colors">
+            Edit
+          </a>
+          <a href="{% url 'main:delete_product' product.id %}" 
+             class="text-red-600 hover:text-red-700 text-sm transition-colors">
+            Delete
+          </a>
+        </div>
+      </div>
+    </div>
+  </article>
+{% endfor %}
