@@ -1,6 +1,6 @@
 import datetime
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.core import serializers
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import authenticate, login, logout
@@ -9,6 +9,8 @@ from django.contrib import messages
 from django.urls import reverse
 from .models import Product
 from .forms import ProductForm
+from django.views.decorators.csrf import csrf_exempt
+from django.template.loader import render_to_string
 
 def register(request):
     form = UserCreationForm()
@@ -105,20 +107,25 @@ def show_product(request, id):
     }
     return render(request, "product_detail.html", context)
 
-@login_required(login_url='main:login')
+@login_required
 def edit_product(request, id):
     product = get_object_or_404(Product, pk=id, user=request.user)
-
-    if request.method == "POST":
+    if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
             form.save()
-            messages.success(request, f"Product '{product.name}' berhasil diperbarui.")
-            return redirect("main:show_my_products")
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
+            return redirect('main:show_main')
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = ProductForm(instance=product)
-
-    return render(request, "edit_product.html", {"form": form, "product": product})
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            html = render_to_string('main/partials/edit_form.html', {'form': form}, request)
+            return HttpResponse(html)
+    return render(request, 'main/edit_product.html', {'form': form, 'product': product})
 
 @login_required(login_url='main:login')
 def delete_product(request, id):
@@ -130,14 +137,67 @@ def delete_product(request, id):
 
     return render(request, "delete_product.html", {"product": product})
 
+@csrf_exempt
+def delete_product_ajax(request, id):
+    if request.method == 'POST':
+        try:
+            product = Product.objects.get(pk=id)
+            product.delete()
+            return JsonResponse({'status': 'success', 'message': 'Produk berhasil dihapus!'})
+        except Product.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Produk tidak ditemukan.'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+
 # JSON dan XML endpoints
 def products_json(request):
-    data = Product.objects.all()
-    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+    products = Product.objects.all().order_by('-created_at')
+    data = []
+    for p in products:
+        # dapatkan thumbnail sebagai URL string (atau kosong jika tidak ada)
+        thumbnail_url = ""
+        try:
+            if p.thumbnail and hasattr(p.thumbnail, 'url'):
+                thumbnail_url = p.thumbnail.url
+        except Exception:
+            thumbnail_url = ""
+
+        data.append({
+            "id": p.id,
+            "name": p.name,
+            "price": p.price,
+            "thumbnail": thumbnail_url,
+            "description": p.description,
+            "category": p.category,
+            "category_display": p.get_category_display(),
+            "user_id": p.user.id if p.user else None,
+            "user_username": p.user.username if p.user else None,
+            "stock": p.stock,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+        })
+    return JsonResponse(data, safe=False)
 
 def product_json_by_id(request, id):
-    data = Product.objects.filter(pk=id)
-    return HttpResponse(serializers.serialize("json", data), content_type="application/json")
+    p = get_object_or_404(Product, pk=id)
+    thumbnail_url = ""
+    try:
+        if p.thumbnail and hasattr(p.thumbnail, 'url'):
+            thumbnail_url = p.thumbnail.url
+    except Exception:
+        thumbnail_url = ""
+    data = {
+        "id": p.id,
+        "name": p.name,
+        "price": p.price,
+        "thumbnail": thumbnail_url,
+        "description": p.description,
+        "category": p.category,
+        "category_display": p.get_category_display(),
+        "user_id": p.user.id if p.user else None,
+        "user_username": p.user.username if p.user else None,
+        "stock": p.stock,
+        "created_at": p.created_at.isoformat() if p.created_at else None,
+    }
+    return JsonResponse(data)
 
 def products_xml(request):
     data = Product.objects.all()

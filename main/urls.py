@@ -25,4 +25,7 @@ urlpatterns = [
 
     path("products/<int:id>/edit/", views.edit_product, name="edit_product"),
     path("products/<int:id>/delete/", views.delete_product, name="delete_product"),
+
+    path('delete-product-ajax/<int:id>/', delete_product_ajax, name='delete_product_ajax'),
+
 ]

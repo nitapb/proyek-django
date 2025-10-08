@@ -17,48 +17,197 @@
       <p class="text-gray-600">Tempat belanja perlengkapan bola 🌸</p>
     </div>
 
-    <!-- Filter Section -->
+    <!-- Filter & Controls -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 bg-white rounded-lg border border-pink-200 p-4 shadow-sm">
       <div class="flex space-x-3 mb-4 sm:mb-0">
-        <!-- Semua Produk -->
-        <a href="{% url 'main:show_all_products' %}"
-           class="{% if view == 'all' %} bg-pink-500 text-white {% else %} bg-white text-gray-700 border border-gray-300 {% endif %} 
-                  px-4 py-2 rounded-md font-medium transition-colors hover:bg-pink-500 hover:text-white">
-          Semua Produk
-        </a>
-        <!-- Produk Saya -->
-        <a href="{% url 'main:show_my_products' %}"
-           class="{% if view == 'mine' %} bg-pink-500 text-white {% else %} bg-white text-gray-700 border border-gray-300 {% endif %} 
-                  px-4 py-2 rounded-md font-medium transition-colors hover:bg-pink-500 hover:text-white">
-          Produk Saya
-        </a>
+        <button id="btn-all" class="filter-btn px-4 py-2 rounded-md font-medium transition-colors">Semua Produk</button>
+        <button id="btn-mine" class="filter-btn px-4 py-2 rounded-md font-medium transition-colors">Produk Saya</button>
       </div>
-      {% if user.is_authenticated %}
-        <div class="text-sm text-gray-500">
-          Last login: {{ last_login }}
-        </div>
-      {% endif %}
+
+      <div class="flex items-center gap-3">
+        {% if user.is_authenticated %}
+          <div class="text-sm text-gray-500 mr-4">Last login: {{ last_login }}</div>
+        {% endif %}
+        <button id="refresh-btn" class="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-md">Refresh</button>
+      </div>
     </div>
 
-    <!-- Product Grid / Empty State -->
-    {% if not products %}
-      <div class="bg-white rounded-lg border border-pink-200 p-12 text-center">
-        <div class="w-32 h-32 mx-auto mb-4">
-          <img src="{% static 'image/no-products.png' %}" alt="No products available" class="w-full h-full object-contain">
+    <!-- States: Loading / Error / Empty / Grid -->
+    <div id="products-root" class="min-h-[300px]">
+      <div id="loading" class="text-center py-12 hidden">
+        <div class="inline-block animate-pulse px-6 py-4 bg-pink-100 rounded-lg">Loading...</div>
+      </div>
+
+      <div id="error" class="text-center py-12 hidden">
+        <div class="inline-block px-6 py-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          Terjadi kesalahan saat memuat produk. Coba tekan tombol Refresh.
         </div>
-        <h3 class="text-lg font-medium text-gray-800 mb-2">Belum ada produk</h3>
-        <p class="text-gray-500 mb-6">Yuk, tambahkan produk pertamamu ✨</p>
-        <a href="{% url 'main:create_product' %}" 
-           class="inline-flex items-center px-4 py-2 bg-pink-500 text-white rounded-md hover:bg-pink-600 transition-colors">
-          + Tambah Produk
-        </a>
       </div>
-    {% else %}
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% include "product_list.html" %}
+
+      <div id="empty" class="text-center py-12 hidden">
+        <div class="bg-white rounded-lg border border-pink-200 p-12 text-center inline-block">
+          <div class="w-32 h-32 mx-auto mb-4">
+            <img src="{% static 'image/no-products.png' %}" alt="No products" class="w-full h-full object-contain">
+          </div>
+          <h3 class="text-lg font-medium text-gray-800 mb-2">Belum ada produk</h3>
+          <p class="text-gray-500 mb-6">Yuk, tambahkan produk pertamamu ✨</p>
+          <a href="{% url 'main:create_product' %}" class="inline-flex items-center px-4 py-2 bg-pink-500 text-white rounded-md hover:bg-pink-600">+ Tambah Produk</a>
+        </div>
       </div>
-    {% endif %}
+
+      <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+        <!-- Cards akan di-inject JS -->
+      </div>
+    </div>
 
   </div>
 </div>
+
+<script>
+// ===================== MAIN AJAX SCRIPT =====================
+document.addEventListener('DOMContentLoaded', function() {
+  const API_URL = "{% url 'main:products_json' %}";
+  const CURRENT_USER_ID = "{{ request.user.id|default:'' }}" 
+      ? parseInt("{{ request.user.id|default:'0' }}") 
+      : null;
+
+  const INITIAL_VIEW = "{{ view|default:'mine' }}";
+
+  const $loading = document.getElementById('loading');
+  const $error = document.getElementById('error');
+  const $empty = document.getElementById('empty');
+  const $grid = document.getElementById('grid');
+  const $btnAll = document.getElementById('btn-all');
+  const $btnMine = document.getElementById('btn-mine');
+  const $refresh = document.getElementById('refresh-btn');
+
+  let currentFilter = INITIAL_VIEW;
+
+  function showState(state) {
+    [$loading, $error, $empty, $grid].forEach(el => el.classList.add('hidden'));
+    if (state === 'loading') $loading.classList.remove('hidden');
+    if (state === 'error') $error.classList.remove('hidden');
+    if (state === 'empty') $empty.classList.remove('hidden');
+    if (state === 'grid') $grid.classList.remove('hidden');
+  }
+
+  function setActiveFilterButtons() {
+    $btnAll.classList.toggle('bg-pink-500', currentFilter === 'all');
+    $btnAll.classList.toggle('text-white', currentFilter === 'all');
+    $btnMine.classList.toggle('bg-pink-500', currentFilter === 'mine');
+    $btnMine.classList.toggle('text-white', currentFilter === 'mine');
+  }
+
+  async function loadProducts() {
+    showState('loading');
+    try {
+      const resp = await fetch(API_URL, { method: 'GET', credentials: 'same-origin' });
+      if (!resp.ok) throw new Error('Network response not ok');
+      const data = await resp.json();
+
+      let filtered = data;
+      if (currentFilter === 'mine' && CURRENT_USER_ID) {
+        filtered = data.filter(p => p.user_id === CURRENT_USER_ID);
+      }
+
+      if (!filtered || filtered.length === 0) {
+        showState('empty');
+        return;
+      }
+
+      $grid.innerHTML = '';
+      for (const p of filtered) {
+        const card = document.createElement('article');
+        card.className = "bg-white rounded-lg border border-pink-200 hover:shadow-lg transition-shadow duration-300 overflow-hidden";
+        card.innerHTML = `
+          <div class="aspect-[4/3] relative overflow-hidden">
+            ${p.thumbnail ? `<img src="${p.thumbnail}" alt="${p.name}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-pink-100"></div>`}
+          </div>
+          <div class="p-5">
+            <h3 class="text-lg font-semibold text-gray-800 mb-2 line-clamp-1">${p.name}</h3>
+            <p class="text-pink-600 font-bold mb-2">Rp${p.price}</p>
+            <p class="text-sm text-gray-500 mb-4">Kategori: ${p.category_display}</p>
+            <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+              <a href="/products/${p.id}/" class="text-pink-600 hover:text-pink-700 font-medium text-sm transition-colors">Detail</a>
+              ${(p.user_id === CURRENT_USER_ID) ? `
+                <div class="flex space-x-2">
+                  <button class="text-yellow-600 hover:text-yellow-700 text-sm transition-colors edit-btn" data-id="${p.id}">Edit</button>
+                  <button class="text-red-600 hover:text-red-700 text-sm transition-colors delete-btn" data-id="${p.id}">Delete</button>
+                </div>` : ''
+              }
+            </div>
+          </div>
+        `;
+        $grid.appendChild(card);
+      }
+      showState('grid');
+    } catch (err) {
+      console.error(err);
+      showState('error');
+    }
+  }
+
+  // Event handlers
+  $btnAll.addEventListener('click', () => { currentFilter = 'all'; setActiveFilterButtons(); loadProducts(); });
+  $btnMine.addEventListener('click', () => { currentFilter = 'mine'; setActiveFilterButtons(); loadProducts(); });
+  $refresh.addEventListener('click', loadProducts);
+
+  // === GLOBAL: buat fungsi loadProducts bisa diakses luar scope ===
+  window.loadProducts = loadProducts;
+
+  // Initial load
+  setActiveFilterButtons();
+  loadProducts();
+});
+
+// ===================== EDIT PRODUCT HANDLER =====================
+document.addEventListener('click', async (e) => {
+  if (e.target.classList.contains('edit-btn')) {
+    const productId = e.target.dataset.id;
+    try {
+      const resp = await fetch(`/products/${productId}/edit/`, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      const html = await resp.text();
+      openModal("Edit Produk", html, `
+        <button id="save-edit" data-id="${productId}"
+          class="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-md transition-colors">Simpan</button>
+        <button onclick="closeModal()" 
+          class="border border-pink-300 text-pink-700 px-4 py-2 rounded-md hover:bg-pink-50">Batal</button>
+      `);
+    } catch (err) {
+      console.error(err);
+      showToast("Gagal", "Tidak dapat memuat form edit.", "error");
+    }
+  }
+});
+
+document.addEventListener('click', async (e) => {
+  if (e.target.id === 'save-edit') {
+    const id = e.target.dataset.id;
+    const form = document.querySelector('#modal-body form');
+    const formData = new FormData(form);
+
+    try {
+      const resp = await fetch(`/products/${id}/edit/`, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+
+      if (resp.ok) {
+        showToast("Berhasil", "Produk berhasil diperbarui!", "success");
+        closeModal();
+        await window.loadProducts(); // perhatikan: ini sudah global
+      } else {
+        showToast("Gagal", "Periksa kembali data yang dimasukkan.", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Error", "Terjadi kesalahan saat memperbarui produk.", "error");
+    }
+  }
+});
+</script>
 {% endblock content %}

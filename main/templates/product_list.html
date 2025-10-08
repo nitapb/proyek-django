@@ -1,3 +1,4 @@
+{% static 'static/js/product.js' %}
 {% for product in products %}
   <article class="bg-white rounded-lg border border-pink-200 hover:shadow-lg transition-shadow duration-300 overflow-hidden">
     <!-- Thumbnail -->
@@ -19,20 +20,25 @@
 
       <!-- Action Buttons -->
       <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+        <!-- tombol Detail selalu tampil -->
         <a href="{% url 'main:show_product' product.id %}" 
-           class="text-pink-600 hover:text-pink-700 font-medium text-sm transition-colors">
+          class="text-pink-600 hover:text-pink-700 font-medium text-sm transition-colors">
           Detail
         </a>
-        <div class="flex space-x-2">
-          <a href="{% url 'main:edit_product' product.id %}" 
-             class="text-yellow-600 hover:text-yellow-700 text-sm transition-colors">
-            Edit
-          </a>
-          <a href="{% url 'main:delete_product' product.id %}" 
-             class="text-red-600 hover:text-red-700 text-sm transition-colors">
-            Delete
-          </a>
-        </div>
+
+        <!-- tombol Edit/Delete hanya jika product.user sama dengan user yg login -->
+        {% if product.user and product.user == user %}
+          <div class="flex space-x-2">
+            <a href="{% url 'main:edit_product' product.id %}" 
+              class="text-yellow-600 hover:text-yellow-700 text-sm transition-colors">
+              Edit
+            </a>
+            <a href="{% url 'main:delete_product' product.id %}" 
+              class="text-red-600 hover:text-red-700 text-sm transition-colors">
+              Delete
+            </a>
+          </div>
+        {% endif %}
       </div>
     </div>
   </article>

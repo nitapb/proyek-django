@@ -13,7 +13,10 @@
     <!-- Global Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/global.css' %}">
 </head>
+{% include 'modal.html' %}
 <body class="bg-pink-50">
     {% block content %}{% endblock content %}
+{% include 'toast.html' %}
+<script src="{% static 'js/toast.js' %}"></script>
 </body>
 </html>
