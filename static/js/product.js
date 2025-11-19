@@ -58,7 +58,11 @@ async function loadProducts() {
             <a href="/products/${p.id}/" class="text-pink-600 hover:text-pink-700 font-medium text-sm transition">Detail</a>
             ${p.user_username === CURRENT_USER ? `
               <div class="flex space-x-2">
-                <a href="/products/${p.id}/edit/" class="text-yellow-600 hover:text-yellow-700 text-sm transition">Edit</a>
+                <a href="#" 
+                  data-id="${p.id}" 
+                  class="edit-btn text-yellow-600 hover:text-yellow-700 text-sm transition">
+                  Edit
+                </a>
                 <button class="text-red-600 hover:text-red-700 text-sm transition delete-btn" data-id="${p.id}">Delete</button>
               </div>` : ""}
           </div>
@@ -121,3 +125,47 @@ document.getElementById("confirm-delete").addEventListener("click", async () => 
 
 // === AUTO LOAD SAAT HALAMAN SIAP ===
 document.addEventListener("DOMContentLoaded", loadProducts);
+
+document.addEventListener("click", async (e) => {
+  if (e.target.classList.contains("edit-btn")) {
+    e.preventDefault();
+    const id = e.target.dataset.id;
+    
+    try {
+      const resp = await fetch(`/edit-product/${id}/`, {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      });
+      const data = await resp.json();
+      document.querySelector("#edit-modal-content").innerHTML = data.html;
+      document.querySelector("#edit-modal").classList.remove("hidden");
+    } catch (err) {
+      console.error("Gagal load form edit:", err);
+    }
+  }
+});
+
+// Submit edit form via AJAX
+document.addEventListener("submit", async (e) => {
+  if (e.target.classList.contains("edit-btn")) {
+    e.preventDefault();
+    const id = e.target.dataset.id;
+
+    try {
+      const resp = await fetch(`/edit-product/${id}/`, {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      });
+      const html = await resp.text(); // <- gunakan .text(), bukan .json()
+      document.querySelector("#edit-modal-content").innerHTML = html;
+      document.querySelector("#edit-modal").classList.remove("hidden");
+    } catch (err) {
+      console.error("Gagal load form edit:", err);
+    }
+  }
+});
+
+// Klik di luar modal untuk menutup
+document.addEventListener("click", (e) => {
+  if (e.target.id === "edit-modal") {
+    e.target.classList.add("hidden");
+  }
+});

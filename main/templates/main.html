@@ -8,6 +8,15 @@
 {% block content %}
 {% include 'navbar.html' %}
 
+{% include 'delete_modal.html' %}
+
+<!-- Modal Edit Product -->
+<div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden justify-center items-center z-50">
+  <div class="bg-white rounded-lg shadow-xl w-11/12 sm:w-3/4 md:w-1/2 max-h-[90vh] overflow-y-auto">
+    <div id="edit-modal-content"></div>
+  </div>
+</div>
+
 <div class="bg-pink-50 w-full pt-16 min-h-screen">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -207,6 +216,54 @@ document.addEventListener('click', async (e) => {
       console.error(err);
       showToast("Error", "Terjadi kesalahan saat memperbarui produk.", "error");
     }
+  }
+});
+
+// ===================== DELETE PRODUCT HANDLER =====================
+document.addEventListener('click', async (e) => {
+  if (e.target.classList.contains('delete-btn')) {
+    const productId = e.target.dataset.id;
+
+    // tampilkan modal konfirmasi
+    const modal = document.getElementById('delete-modal');
+    modal.classList.remove('hidden');
+
+    // tombol batal
+    const cancelBtn = document.getElementById('cancel-delete');
+    const confirmBtn = document.getElementById('confirm-delete');
+
+    // Pastikan event lama dihapus dulu supaya tidak dobel listener
+    const newCancel = cancelBtn.cloneNode(true);
+    const newConfirm = confirmBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+    confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+
+    // klik batal → tutup modal
+    newCancel.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+
+    // klik konfirmasi → hapus via AJAX
+    newConfirm.addEventListener('click', async () => {
+      try {
+        const resp = await fetch(`/delete-product-ajax/${productId}/`, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+
+        const data = await resp.json();
+        if (data.status === 'success') {
+          showToast('Berhasil', data.message, 'success');
+          modal.classList.add('hidden');
+          await window.loadProducts();
+        } else {
+          showToast('Gagal', data.message, 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Error', 'Gagal menghapus produk.', 'error');
+      }
+    });
   }
 });
 </script>

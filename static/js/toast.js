@@ -34,6 +34,7 @@ function showToast(title, message, type = 'pink', duration = 3000) {
     // Animasi muncul
     toastComponent.classList.remove('opacity-0', 'translate-y-10');
     toastComponent.classList.add('opacity-100', 'translate-y-0');
+    toastComponent.classList.add('transition', 'duration-500');
 
     // Hilang setelah durasi tertentu
     setTimeout(() => {

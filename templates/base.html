@@ -17,6 +17,61 @@
 <body class="bg-pink-50">
     {% block content %}{% endblock content %}
 {% include 'toast.html' %}
+{% block script %}
 <script src="{% static 'js/toast.js' %}"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  // REGISTER AJAX
+  const registerForm = document.querySelector("#register-form");
+  const registerBtn = document.querySelector("#register-btn");
+  if (registerBtn) {
+    registerBtn.addEventListener("click", async () => {
+      const formData = new FormData(registerForm);
+      const response = await fetch("{% url 'main:register' %}", {
+        method: "POST",
+        headers: { "X-CSRFToken": csrftoken },
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        showToast("Success", data.message || "Account created successfully!", "success");
+        setTimeout(() => window.location.href = "{% url 'main:login' %}", 1500);
+      } else {
+        showToast("Error", data.error || "Failed to register account.", "error");
+      }
+    });
+  }
+
+  // LOGIN AJAX
+  const loginForm = document.querySelector("#login-form");
+  const loginBtn = document.querySelector("#login-btn");
+  if (loginBtn) {
+    loginBtn.addEventListener("click", async () => {
+      const formData = new FormData(loginForm);
+      const response = await fetch("{% url 'main:login' %}", {
+        method: "POST",
+        headers: { "X-CSRFToken": csrftoken },
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        showToast("Success", data.message || "Login successful!", "success");
+        setTimeout(() => window.location.href = "{% url 'main:show_main' %}", 1500);
+      } else {
+        showToast("Error", data.error || "Invalid username or password.", "error");
+      }
+    });
+  }
+});
+
+const csrftokenElem = document.querySelector('[name=csrfmiddlewaretoken]');
+const csrftoken = csrftokenElem ? csrftokenElem.value : '';
+</script>
+{% endblock script %}
+
 </body>
 </html>

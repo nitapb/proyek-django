@@ -11,32 +11,36 @@ from .models import Product
 from .forms import ProductForm
 from django.views.decorators.csrf import csrf_exempt
 from django.template.loader import render_to_string
+from django.http import JsonResponse
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+
 
 def register(request):
-    form = UserCreationForm()
     if request.method == "POST":
         form = UserCreationForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, "Akun berhasil dibuat! Silakan login.")
-            return redirect("main:login")
-    context = {"form": form}
-    return render(request, "register.html", context)
+            return JsonResponse({"message": "Account successfully created!"}, status=200)
+        else:
+            return JsonResponse({"error": str(form.errors)}, status=400)
+    else:
+        form = UserCreationForm()
+    return render(request, "register.html", {"form": form})
 
 def login_user(request):
     if request.method == "POST":
-        form = AuthenticationForm(request, data=request.POST)
+        form = AuthenticationForm(data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            response = HttpResponseRedirect(reverse("main:show_main"))
-            response.set_cookie("last_login", str(datetime.datetime.now()))
-            return response
+            return JsonResponse({"message": "Login successful!"}, status=200)
         else:
-            messages.error(request, "Username atau Password salah!")
+            return JsonResponse({"error": "Invalid username or password."}, status=400)
     else:
-        form = AuthenticationForm(request)
+        form = AuthenticationForm()
     return render(request, "login.html", {"form": form})
+
 
 def logout_user(request):
     logout(request)
@@ -107,25 +111,36 @@ def show_product(request, id):
     }
     return render(request, "product_detail.html", context)
 
-@login_required
+@login_required(login_url='/login')
 def edit_product(request, id):
     product = get_object_or_404(Product, pk=id, user=request.user)
-    if request.method == 'POST':
+
+    if request.method == "POST":
         form = ProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
             form.save()
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': True})
-            return redirect('main:show_main')
-        else:
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': False, 'errors': form.errors})
-    else:
-        form = ProductForm(instance=product)
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            html = render_to_string('main/partials/edit_form.html', {'form': form}, request)
-            return HttpResponse(html)
-    return render(request, 'main/edit_product.html', {'form': form, 'product': product})
+            return JsonResponse({"success": True})
+        return JsonResponse({
+            "success": False,
+            "errors": form.errors
+        })
+
+    # GET request
+    form = ProductForm(instance=product)
+    
+    # kalau AJAX → kirim partial HTML (form edit)
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        html = render_to_string("edit_product.html", {
+            "form": form,
+            "product": product
+        }, request=request)
+        return HttpResponse(html)
+    
+    # fallback
+    return render(request, "edit_product.html", {
+        "form": form,
+        "product": product
+    })
 
 @login_required(login_url='main:login')
 def delete_product(request, id):
@@ -154,12 +169,7 @@ def products_json(request):
     data = []
     for p in products:
         # dapatkan thumbnail sebagai URL string (atau kosong jika tidak ada)
-        thumbnail_url = ""
-        try:
-            if p.thumbnail and hasattr(p.thumbnail, 'url'):
-                thumbnail_url = p.thumbnail.url
-        except Exception:
-            thumbnail_url = ""
+        thumbnail_url = p.thumbnail if p.thumbnail else ""
 
         data.append({
             "id": p.id,
@@ -178,12 +188,7 @@ def products_json(request):
 
 def product_json_by_id(request, id):
     p = get_object_or_404(Product, pk=id)
-    thumbnail_url = ""
-    try:
-        if p.thumbnail and hasattr(p.thumbnail, 'url'):
-            thumbnail_url = p.thumbnail.url
-    except Exception:
-        thumbnail_url = ""
+    thumbnail_url = p.thumbnail if p.thumbnail else ""
     data = {
         "id": p.id,
         "name": p.name,
